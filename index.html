@@ -1,171 +1,207 @@
 <!DOCTYPE html>
 <html lang="tr">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Nisaya Oyun</title>
-<style>
-  body {
-    font-family: Arial, sans-serif;
-    background: #f0e68c;
-    text-align: center;
-    margin: 0;
-    padding: 20px;
-  }
-  h1 { color: #4b2e83; }
-  #characters {
-    display: flex;
-    justify-content: center;
-    gap: 20px;
-    margin: 20px 0;
-  }
-  .char {
-    cursor: pointer;
-    font-size: 60px;
-    padding: 10px;
-    border: 3px solid #4b2e83;
-    border-radius: 15px;
-    user-select: none;
-    transition: transform 0.2s;
-    width: 100px;
-    height: 100px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  }
-  .char:hover {
-    transform: scale(1.2);
-    border-color: #ff6347;
-  }
-  #message {
-    font-size: 24px;
-    margin-top: 20px;
-    height: 30px;
-    color: #333;
-  }
-  #scoreboard {
-    font-size: 22px;
-    margin-top: 15px;
-  }
-  #timer {
-    font-size: 20px;
-    margin-top: 10px;
-    color: #555;
-  }
-  #startBtn {
-    padding: 12px 25px;
-    font-size: 20px;
-    background: #4b2e83;
-    color: white;
-    border: none;
-    border-radius: 12px;
-    cursor: pointer;
-    margin-top: 25px;
-  }
-  #startBtn:hover {
-    background: #662d91;
-  }
-</style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Nisa'nın Süper Osuruk Oyunu</title>
+  <style>
+    body {
+      font-family: 'Comic Sans MS', cursive;
+      background: linear-gradient(to bottom, #ffeaa7, #fab1a0);
+      text-align: center;
+      margin: 0;
+      padding: 20px;
+    }
+    h1 {
+      color: #6c5ce7;
+      font-size: 36px;
+    }
+    #characters {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 20px;
+      margin: 30px 0;
+    }
+    .char {
+      cursor: pointer;
+      font-size: 60px;
+      padding: 20px;
+      border: 3px solid #6c5ce7;
+      border-radius: 20px;
+      user-select: none;
+      transition: transform 0.3s;
+      width: 100px;
+      height: 100px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #fff;
+      position: relative;
+      overflow: hidden;
+    }
+    .char:hover {
+      transform: scale(1.3);
+      border-color: #fd79a8;
+    }
+    .farting {
+      animation: shake 0.3s ease-in-out 2;
+    }
+    @keyframes shake {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.4) rotate(10deg); }
+    }
+    .effect {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      background: radial-gradient(circle, rgba(255,255,255,0.7) 20%, transparent 70%);
+      animation: puff 0.5s ease-out;
+      pointer-events: none;
+    }
+    @keyframes puff {
+      from { transform: scale(0.5); opacity: 1; }
+      to { transform: scale(2); opacity: 0; }
+    }
+    #message {
+      font-size: 24px;
+      margin-top: 20px;
+      color: #2d3436;
+      min-height: 30px;
+    }
+    #scoreboard, #timer {
+      font-size: 22px;
+      margin-top: 10px;
+      color: #2d3436;
+    }
+    #startBtn {
+      padding: 14px 30px;
+      font-size: 22px;
+      background: #6c5ce7;
+      color: white;
+      border: none;
+      border-radius: 14px;
+      cursor: pointer;
+      margin-top: 30px;
+      transition: background 0.2s;
+    }
+    #startBtn:hover {
+      background: #341f97;
+    }
+  </style>
 </head>
 <body>
 
-<h1>Nisaya Oyun</h1>
-<p>Kimin osurduğunu bul! 💨</p>
+  <h1>💨 Nisa'nın Süper Osuruk Oyunu 💨</h1>
+  <p>Hangisi osurdu? Tahmin et ve puanları topla!</p>
 
-<div id="timer">Süre: 30 saniye</div>
-<div id="scoreboard">Puan: 0</div>
-<div id="message"></div>
+  <div id="timer">Süre: 30 saniye</div>
+  <div id="scoreboard">Puan: 0</div>
+  <div id="message"></div>
 
-<div id="characters">
-  <!-- Karakterler buraya JS ile eklenecek -->
-</div>
+  <div id="characters"></div>
 
-<button id="startBtn">Oyunu Başlat</button>
+  <button id="startBtn">Başla Bakalım 😏</button>
 
-<script>
-  const characters = [
-    { name: "Bebek", emoji: "👶" },
-    { name: "Nine", emoji: "👵" },
-    { name: "Sporcu", emoji: "🏃" },
-    { name: "Trol Surat", emoji: "😈" },
-    { name: "Robot", emoji: "🤖" }
-  ];
+  <audio id="fartSound" src="https://www.soundjay.com/human/fart-01.mp3"></audio>
 
-  let fartingIndex = null;
-  let score = 0;
-  let timeLeft = 30;
-  let gameActive = false;
-  let timerInterval = null;
-  const charsContainer = document.getElementById("characters");
-  const messageEl = document.getElementById("message");
-  const scoreboardEl = document.getElementById("scoreboard");
-  const timerEl = document.getElementById("timer");
-  const startBtn = document.getElementById("startBtn");
+  <script>
+    const characters = [
+      { name: "Nisa", emoji: "👧" },
+      { name: "Berke", emoji: "🧑" },
+      { name: "Robot", emoji: "🤖" },
+      { name: "Nine", emoji: "👵" },
+      { name: "Kedi", emoji: "🐱" }
+    ];
 
-  function createCharacters() {
-    charsContainer.innerHTML = "";
-    characters.forEach((char, i) => {
-      const div = document.createElement("div");
-      div.classList.add("char");
-      div.textContent = char.emoji;
-      div.title = char.name;
-      div.addEventListener("click", () => selectCharacter(i));
-      charsContainer.appendChild(div);
+    let fartingIndex = null;
+    let score = 0;
+    let timeLeft = 30;
+    let gameActive = false;
+    let timerInterval = null;
+    const charsContainer = document.getElementById("characters");
+    const messageEl = document.getElementById("message");
+    const scoreboardEl = document.getElementById("scoreboard");
+    const timerEl = document.getElementById("timer");
+    const startBtn = document.getElementById("startBtn");
+    const fartSound = document.getElementById("fartSound");
+
+    function createCharacters() {
+      charsContainer.innerHTML = "";
+      characters.forEach((char, i) => {
+        const div = document.createElement("div");
+        div.classList.add("char");
+        div.textContent = char.emoji;
+        div.title = char.name;
+        div.addEventListener("click", () => selectCharacter(i, div));
+        charsContainer.appendChild(div);
+      });
+    }
+
+    function pickFartingCharacter() {
+      fartingIndex = Math.floor(Math.random() * characters.length);
+      const fartDiv = charsContainer.children[fartingIndex];
+      fartDiv.classList.add("farting");
+      fartSound.play();
+      setTimeout(() => fartDiv.classList.remove("farting"), 400);
+      messageEl.textContent = `Kim yaptı bu sesi!? 😂`;
+    }
+
+    function showEffect(div) {
+      const effect = document.createElement("div");
+      effect.classList.add("effect");
+      div.appendChild(effect);
+      setTimeout(() => div.removeChild(effect), 500);
+    }
+
+    function selectCharacter(index, div) {
+      if (!gameActive) return;
+
+      showEffect(div);
+      div.style.pointerEvents = "none";
+      setTimeout(() => div.style.pointerEvents = "auto", 500);
+
+      if (index === fartingIndex) {
+        score++;
+        messageEl.textContent = `Doğru tahmin Nisa! 😄 Puan +1`;
+      } else {
+        score = Math.max(0, score - 1);
+        messageEl.textContent = `Yanlış oldu 😬 Puan -1`;
+      }
+      scoreboardEl.textContent = `Puan: ${score}`;
+      setTimeout(pickFartingCharacter, 600);
+    }
+
+    function updateTimer() {
+      timeLeft--;
+      timerEl.textContent = `Süre: ${timeLeft} saniye`;
+      if (timeLeft <= 0) {
+        clearInterval(timerInterval);
+        gameActive = false;
+        messageEl.textContent = `Süre bitti! Toplam puanın: ${score} 🎉`;
+        startBtn.disabled = false;
+        startBtn.textContent = "Tekrar Oyna 🔁";
+      }
+    }
+
+    function startGame() {
+      score = 0;
+      timeLeft = 30;
+      gameActive = true;
+      startBtn.disabled = true;
+      messageEl.textContent = "";
+      scoreboardEl.textContent = `Puan: ${score}`;
+      timerEl.textContent = `Süre: ${timeLeft} saniye`;
+      pickFartingCharacter();
+      timerInterval = setInterval(updateTimer, 1000);
+    }
+
+    startBtn.addEventListener("click", () => {
+      createCharacters();
+      startGame();
     });
-  }
 
-  function pickFartingCharacter() {
-    fartingIndex = Math.floor(Math.random() * characters.length);
-    const fartingChar = characters[fartingIndex];
-    messageEl.textContent = `${fartingChar.name} osurdu! Hadi seç! 💨`;
-  }
-
-  function selectCharacter(index) {
-    if (!gameActive) return;
-    if (index === fartingIndex) {
-      score++;
-      messageEl.textContent = `Yakalandın Nisa! 😂 Puan +1`;
-    } else {
-      score = Math.max(0, score - 1);
-      messageEl.textContent = `Yanlış kardeşim! Puan -1`;
-    }
-    scoreboardEl.textContent = `Puan: ${score}`;
-    pickFartingCharacter();
-  }
-
-  function updateTimer() {
-    timeLeft--;
-    timerEl.textContent = `Süre: ${timeLeft} saniye`;
-    if (timeLeft <= 0) {
-      clearInterval(timerInterval);
-      gameActive = false;
-      messageEl.textContent = `Süre doldu! Toplam puan: ${score} 🎉`;
-      startBtn.disabled = false;
-      startBtn.textContent = "Tekrar Oyna";
-    }
-  }
-
-  function startGame() {
-    score = 0;
-    timeLeft = 30;
-    gameActive = true;
-    startBtn.disabled = true;
-    messageEl.textContent = "";
-    scoreboardEl.textContent = `Puan: ${score}`;
-    timerEl.textContent = `Süre: ${timeLeft} saniye`;
-    pickFartingCharacter();
-    timerInterval = setInterval(updateTimer, 1000);
-  }
-
-  startBtn.addEventListener("click", () => {
     createCharacters();
-    startGame();
-  });
-
-  // Sayfa yüklendiğinde karakterleri göster
-  createCharacters();
-
-</script>
-
+  </script>
 </body>
 </html>

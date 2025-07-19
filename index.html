@@ -3,315 +3,168 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Kafa Topu - Nisa vs Berke</title>
+<title>Nisaya Oyun</title>
 <style>
   body {
-    margin: 0; background: #6bb24b; display: flex; justify-content: center; align-items: center; height: 100vh; 
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    font-family: Arial, sans-serif;
+    background: #f0e68c;
+    text-align: center;
+    margin: 0;
+    padding: 20px;
+  }
+  h1 { color: #4b2e83; }
+  #characters {
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+    margin: 20px 0;
+  }
+  .char {
+    cursor: pointer;
+    font-size: 60px;
+    padding: 10px;
+    border: 3px solid #4b2e83;
+    border-radius: 15px;
     user-select: none;
+    transition: transform 0.2s;
+    width: 100px;
+    height: 100px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
   }
-  #gameCanvas {
-    background: linear-gradient(to top, #4caf50 0%, #81c784 100%);
-    border: 4px solid #2e7d32;
-    border-radius: 12px;
-    display: block;
-  }
-  #scoreBoard {
-    position: absolute; top: 10px; width: 100%; text-align: center; font-size: 24px; color: white; font-weight: bold;
-    text-shadow: 2px 2px 4px #000;
+  .char:hover {
+    transform: scale(1.2);
+    border-color: #ff6347;
   }
   #message {
-    position: absolute; top: 50px; width: 100%; text-align: center; font-size: 20px; color: yellow; font-weight: bold;
-    text-shadow: 1px 1px 3px #000;
+    font-size: 24px;
+    margin-top: 20px;
+    height: 30px;
+    color: #333;
   }
-  #controls {
-    position: fixed; bottom: 20px; width: 100%; display: flex; justify-content: center; gap: 20px;
-    user-select: none;
+  #scoreboard {
+    font-size: 22px;
+    margin-top: 15px;
   }
-  .btn {
-    width: 60px; height: 60px; background: #2e7d32; color: white; font-size: 28px; border-radius: 50%; 
-    display: flex; justify-content: center; align-items: center;
-    box-shadow: 0 0 8px #1b5e20;
+  #timer {
+    font-size: 20px;
+    margin-top: 10px;
+    color: #555;
   }
-  .btn:active {
-    background: #1b5e20;
+  #startBtn {
+    padding: 12px 25px;
+    font-size: 20px;
+    background: #4b2e83;
+    color: white;
+    border: none;
+    border-radius: 12px;
+    cursor: pointer;
+    margin-top: 25px;
+  }
+  #startBtn:hover {
+    background: #662d91;
   }
 </style>
 </head>
 <body>
 
-<div id="scoreBoard">Nisa: 0 - Berke: 0</div>
-<div id="message"></div>
-<canvas id="gameCanvas" width="700" height="400"></canvas>
+<h1>Nisaya Oyun</h1>
+<p>Kimin osurduğunu bul! 💨</p>
 
-<div id="controls">
-  <div class="btn" id="leftBtn">◀</div>
-  <div class="btn" id="jumpBtn">⬆</div>
-  <div class="btn" id="rightBtn">▶</div>
+<div id="timer">Süre: 30 saniye</div>
+<div id="scoreboard">Puan: 0</div>
+<div id="message"></div>
+
+<div id="characters">
+  <!-- Karakterler buraya JS ile eklenecek -->
 </div>
 
+<button id="startBtn">Oyunu Başlat</button>
+
 <script>
-(() => {
-  const canvas = document.getElementById('gameCanvas');
-  const ctx = canvas.getContext('2d');
-  const WIDTH = canvas.width;
-  const HEIGHT = canvas.height;
-  const groundLevel = HEIGHT - 50;
-  const gravity = 0.6;
+  const characters = [
+    { name: "Bebek", emoji: "👶" },
+    { name: "Nine", emoji: "👵" },
+    { name: "Sporcu", emoji: "🏃" },
+    { name: "Trol Surat", emoji: "😈" },
+    { name: "Robot", emoji: "🤖" }
+  ];
 
-  class Player {
-    constructor(x, color) {
-      this.x = x;
-      this.y = groundLevel;
-      this.width = 50;
-      this.height = 80;
-      this.color = color;
-      this.velX = 0;
-      this.velY = 0;
-      this.speed = 5;
-      this.jumping = false;
-    }
-    draw() {
-      // Body
-      ctx.fillStyle = this.color;
-      ctx.fillRect(this.x, this.y - this.height, this.width, this.height);
-      // Head (oval)
-      ctx.beginPath();
-      ctx.ellipse(this.x + this.width/2, this.y - this.height - 20, 25, 30, 0, 0, Math.PI*2);
-      ctx.fillStyle = '#f9d9b7';
-      ctx.fill();
-      ctx.stroke();
-    }
-    update() {
-      this.velY += gravity;
-      this.x += this.velX;
-      this.y += this.velY;
+  let fartingIndex = null;
+  let score = 0;
+  let timeLeft = 30;
+  let gameActive = false;
+  let timerInterval = null;
+  const charsContainer = document.getElementById("characters");
+  const messageEl = document.getElementById("message");
+  const scoreboardEl = document.getElementById("scoreboard");
+  const timerEl = document.getElementById("timer");
+  const startBtn = document.getElementById("startBtn");
 
-      if(this.y > groundLevel) {
-        this.y = groundLevel;
-        this.velY = 0;
-        this.jumping = false;
-      }
-      if(this.x < 0) this.x = 0;
-      if(this.x + this.width > WIDTH) this.x = WIDTH - this.width;
-    }
-  }
-
-  class Ball {
-    constructor() {
-      this.x = WIDTH / 2;
-      this.y = HEIGHT / 2;
-      this.radius = 20;
-      this.velX = 6 * (Math.random() > 0.5 ? 1 : -1);
-      this.velY = -6;
-      this.maxSpeed = 10;
-    }
-    draw() {
-      ctx.beginPath();
-      ctx.fillStyle = 'white';
-      ctx.shadowColor = 'black';
-      ctx.shadowBlur = 6;
-      ctx.arc(this.x, this.y, this.radius, 0, Math.PI*2);
-      ctx.fill();
-      ctx.shadowBlur = 0;
-    }
-    update() {
-      this.x += this.velX;
-      this.y += this.velY;
-      this.velY += gravity * 0.5;
-
-      if(this.x - this.radius < 0) {
-        this.x = this.radius;
-        this.velX = -this.velX;
-      }
-      if(this.x + this.radius > WIDTH) {
-        this.x = WIDTH - this.radius;
-        this.velX = -this.velX;
-      }
-      if(this.y + this.radius > groundLevel) {
-        this.y = groundLevel - this.radius;
-        this.velY = -this.velY * 0.7;
-      }
-      if(this.y - this.radius < 0) {
-        this.y = this.radius;
-        this.velY = -this.velY;
-      }
-
-      if(this.velX > this.maxSpeed) this.velX = this.maxSpeed;
-      if(this.velX < -this.maxSpeed) this.velX = -this.maxSpeed;
-      if(this.velY > this.maxSpeed) this.velY = this.maxSpeed;
-      if(this.velY < -this.maxSpeed) this.velY = -this.maxSpeed;
-    }
-  }
-
-  function isColliding(rect, circle) {
-    const distX = Math.abs(circle.x - rect.x - rect.width / 2);
-    const distY = Math.abs(circle.y - rect.y + rect.height / 2);
-    if(distX > (rect.width / 2 + circle.radius)) return false;
-    if(distY > (rect.height / 2 + circle.radius)) return false;
-
-    if(distX <= (rect.width / 2)) return true;
-    if(distY <= (rect.height / 2)) return true;
-
-    const dx = distX - rect.width / 2;
-    const dy = distY - rect.height / 2;
-    return (dx*dx + dy*dy <= (circle.radius * circle.radius));
-  }
-
-  // Oyuncular ve top
-  const player1 = new Player(100, '#e53935'); // Nisa
-  const player2 = new Player(WIDTH - 150, '#1e88e5'); // Berke
-  const ball = new Ball();
-
-  // Skor ve mesaj
-  let score1 = 0, score2 = 0;
-  const scoreBoard = document.getElementById('scoreBoard');
-  const message = document.getElementById('message');
-
-  // Klavye kontrolleri
-  const keys = {};
-  window.addEventListener('keydown', e => { keys[e.key.toLowerCase()] = true; });
-  window.addEventListener('keyup', e => { keys[e.key.toLowerCase()] = false; });
-
-  // Yapay zeka (Berke)
-  function aiMove() {
-    if(ball.x > player2.x + player2.width/2 + 10) player2.velX = player2.speed;
-    else if(ball.x < player2.x + player2.width/2 - 10) player2.velX = -player2.speed;
-    else player2.velX = 0;
-
-    if(!player2.jumping && ball.y > groundLevel - 100 && Math.abs(ball.x - (player2.x + player2.width/2)) < 60) {
-      player2.velY = -15;
-      player2.jumping = true;
-    }
-  }
-
-  function updateScore() {
-    scoreBoard.textContent = `Nisa: ${score1} - Berke: ${score2}`;
-  }
-
-  function resetRound() {
-    ball.x = WIDTH / 2;
-    ball.y = HEIGHT / 2;
-    ball.velX = 6 * (Math.random() > 0.5 ? 1 : -1);
-    ball.velY = -6;
-
-    player1.x = 100;
-    player1.y = groundLevel;
-    player1.velX = 0;
-    player1.velY = 0;
-    player1.jumping = false;
-
-    player2.x = WIDTH - 150;
-    player2.y = groundLevel;
-    player2.velX = 0;
-    player2.velY = 0;
-    player2.jumping = false;
-
-    updateScore();
-  }
-
-  function checkGoal() {
-    const goalHeight = 100;
-    if(ball.x - ball.radius < 0 && ball.y > groundLevel - goalHeight) {
-      score2++;
-      message.textContent = 'Berke GOL attı! 🎉';
-      resetRound();
-    }
-    if(ball.x + ball.radius > WIDTH && ball.y > groundLevel - goalHeight) {
-      score1++;
-      message.textContent = 'Nisa GOL attı! 🎉';
-      resetRound();
-    }
-  }
-
-  function gameLoop() {
-    ctx.clearRect(0, 0, WIDTH, HEIGHT);
-
-    // Zemin
-    ctx.fillStyle = '#388e3c';
-    ctx.fillRect(0, groundLevel, WIDTH, HEIGHT - groundLevel);
-
-    // Kaleler
-    ctx.fillStyle = '#fbc02d';
-    ctx.fillRect(0, groundLevel - 100, 20, 100);
-    ctx.fillRect(WIDTH - 20, groundLevel - 100, 20, 100);
-
-    // Çizimler
-    player1.draw();
-    player2.draw();
-    ball.draw();
-
-    // Güncellemeler
-    player1.update();
-    player2.update();
-    ball.update();
-
-    // Kontroller Nisa (player1)
-    if(keys['a']) player1.velX = -player1.speed;
-    else if(keys['d']) player1.velX = player1.speed;
-    else player1.velX = 0;
-
-    if(keys['w'] && !player1.jumping) {
-      player1.velY = -15;
-      player1.jumping = true;
-    }
-
-    // Yapay zeka hareketi
-    aiMove();
-
-    // Top-oyuncu çarpışmaları
-    [player1, player2].forEach(player => {
-      const rect = {x: player.x, y: player.y - player.height, width: player.width, height: player.height};
-      if(isColliding(rect, ball)) {
-        ball.velY = -10;
-
-        if(ball.x < player.x + player.width / 2)
-          ball.velX = -Math.abs(ball.velX) - 1;
-        else
-          ball.velX = Math.abs(ball.velX) + 1;
-
-        // Hız sınırı
-        if(ball.velX > ball.maxSpeed) ball.velX = ball.maxSpeed;
-        if(ball.velX < -ball.maxSpeed) ball.velX = -ball.maxSpeed;
-      }
+  function createCharacters() {
+    charsContainer.innerHTML = "";
+    characters.forEach((char, i) => {
+      const div = document.createElement("div");
+      div.classList.add("char");
+      div.textContent = char.emoji;
+      div.title = char.name;
+      div.addEventListener("click", () => selectCharacter(i));
+      charsContainer.appendChild(div);
     });
-
-    checkGoal();
-
-    // Oyun sonu kontrolü (5 gol)
-    if(score1 >= 5) {
-      message.textContent = 'Nisa Kazandı! 🎉 Tebrikler!';
-      return; // Oyunu durdur
-    }
-    if(score2 >= 5) {
-      message.textContent = 'Berke Kazandı! 😢';
-      return; // Oyunu durdur
-    }
-
-    requestAnimationFrame(gameLoop);
   }
 
-  updateScore();
-  gameLoop();
+  function pickFartingCharacter() {
+    fartingIndex = Math.floor(Math.random() * characters.length);
+    const fartingChar = characters[fartingIndex];
+    messageEl.textContent = `${fartingChar.name} osurdu! Hadi seç! 💨`;
+  }
 
-  // Mobil kontroller
-  const leftBtn = document.getElementById('leftBtn');
-  const rightBtn = document.getElementById('rightBtn');
-  const jumpBtn = document.getElementById('jumpBtn');
-
-  leftBtn.addEventListener('touchstart', () => { keys['a'] = true; });
-  leftBtn.addEventListener('touchend', () => { keys['a'] = false; });
-
-  rightBtn.addEventListener('touchstart', () => { keys['d'] = true; });
-  rightBtn.addEventListener('touchend', () => { keys['d'] = false; });
-
-  jumpBtn.addEventListener('touchstart', () => { 
-    if(!player1.jumping) {
-      player1.velY = -15; 
-      player1.jumping = true;
+  function selectCharacter(index) {
+    if (!gameActive) return;
+    if (index === fartingIndex) {
+      score++;
+      messageEl.textContent = `Yakalandın Nisa! 😂 Puan +1`;
+    } else {
+      score = Math.max(0, score - 1);
+      messageEl.textContent = `Yanlış kardeşim! Puan -1`;
     }
+    scoreboardEl.textContent = `Puan: ${score}`;
+    pickFartingCharacter();
+  }
+
+  function updateTimer() {
+    timeLeft--;
+    timerEl.textContent = `Süre: ${timeLeft} saniye`;
+    if (timeLeft <= 0) {
+      clearInterval(timerInterval);
+      gameActive = false;
+      messageEl.textContent = `Süre doldu! Toplam puan: ${score} 🎉`;
+      startBtn.disabled = false;
+      startBtn.textContent = "Tekrar Oyna";
+    }
+  }
+
+  function startGame() {
+    score = 0;
+    timeLeft = 30;
+    gameActive = true;
+    startBtn.disabled = true;
+    messageEl.textContent = "";
+    scoreboardEl.textContent = `Puan: ${score}`;
+    timerEl.textContent = `Süre: ${timeLeft} saniye`;
+    pickFartingCharacter();
+    timerInterval = setInterval(updateTimer, 1000);
+  }
+
+  startBtn.addEventListener("click", () => {
+    createCharacters();
+    startGame();
   });
-})();
+
+  // Sayfa yüklendiğinde karakterleri göster
+  createCharacters();
+
 </script>
 
 </body>
